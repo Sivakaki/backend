@@ -21,25 +21,6 @@ connectDB()
     console.log("MongoDb connection failed !!! ", err);
   });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //first approach for connecting database to project
 /*
 import express from "express";
