@@ -1,3 +1,3 @@
 # Chai aur backend series
 
-This is a  practice proect on backend with javascript
+This is a  practice project on backend with javascript
