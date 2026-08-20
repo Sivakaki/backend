@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -175,41 +175,50 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshtoken || req.body.refreshToken;
 
-    if(!incomingRefreshToken){
-      throw new ApiError(401 , "Unauthorized request");
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized request");
+  }
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh Token");
     }
 
-    try {
-      const decodedToken = jwt.verify({
-        incomingRefreshToken,
-        process.env.REFRESH_TOKEN_SECRET
-      })
-  
-      const user = await User.findById(decodedToken?._id);
-  
-      if(!user) {
-        throw new ApiError(401,"Invalid refresh Token")
-      }
-  
-      if (incomingRefreshToken !== user?.refreshToken) {
-        throw new ApiError(401 , 'Refresh Token is expired or used')
-      };
-  
-      const options = {
-        httpOnly : true,
-        secure : true
-      }
-  
-      const {accessToken , newRefreshToken} = await generateAccessAndRefereshTokens(user._id);
-  
-      return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",newRefreshToken,options).json(
-        new ApiResponse(200 , {
-          accessToken, newRefreshToken
-        },"access token refreshed")
-      )
-    } catch (error) {
-      throw new ApiError(401 , error.message || "Invalid refresh taken")
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh Token is expired or used");
     }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefereshTokens(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            accessToken,
+            newRefreshToken,
+          },
+          "access token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error.message || "Invalid refresh taken");
+  }
 });
 
-export { registerUser, loginUser, logOutUser ,refreshAccessToken};
+export { registerUser, loginUser, logOutUser, refreshAccessToken };
